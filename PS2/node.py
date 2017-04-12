@@ -5,7 +5,7 @@ class Node:
     def __init__(self):
         self.label = None # Class Label
         self.children = {} # If children is empty OR all examples are of the same class, it is a leaf node
-        self.condition = None # Class label is None. This holds the condition needed to pass to traverse through tree
+        self.attribute = None # Hold the attribute used to compare/split with
 
     def getLabel(self):
         return self.label
