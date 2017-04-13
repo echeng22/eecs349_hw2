@@ -17,13 +17,16 @@ class Node:
         self.label = label
 
     def getChildren(self):
-        return self.label
+        return self.children
+
+    def setChildren(self, children):
+        self.children = children
 
     def addChildren(self, key, value):
         self.children[key] = value
 
     def getAttribute(self):
-        return self.condition
+        return self.attribute
 
     def setAttribute(self, attribute):
         self.attribute = attribute
