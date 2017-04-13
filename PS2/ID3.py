@@ -43,6 +43,7 @@ def ID3_helper(examples, attributes, default):
         attributes.remove(bestAt)
         newNode = Node()
         newNode.setAttribute(bestAt)
+        newNode.setTestSamples(examples)
         atValues = getUniqueAttrValues(examples, bestAt)
         sortedSamples = sortExamplesByAttribute(examples, bestAt, atValues)
         for i in range(len(atValues)):
@@ -53,6 +54,7 @@ def ID3_helper(examples, attributes, default):
             print "Sorted Examples"
             print sortedSamples[i]
             subtree = ID3_helper(sortedSamples[i], attributes, getClassDistribution(sortedSamples[i]))
+            subtree.setParent(newNode)
             newNode.addChildren(atValues[i], subtree)
         return newNode
 
@@ -70,6 +72,12 @@ def test(node, examples):
     Takes in a trained tree and a test set of examples.  Returns the accuracy (fraction
     of examples the tree classifies correctly).
     '''
+    correct = 0
+    for example in examples:
+        classVal = evaluate(node, example)
+        if classVal == example['Class']:
+            correct = correct + 1
+    return float(correct)/len(examples)
 
 
 def evaluate(node, example):
