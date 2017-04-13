@@ -16,14 +16,14 @@ class Node:
     def getChildren(self):
         return self.label
 
-    def setChildren(self, children):
-        self.children = children
+    def addChildren(self, key, value):
+        self.children[key] = value
 
-    def getCondition(self):
+    def getAttribute(self):
         return self.condition
 
-    def setCondition(self, condition):
-        self.children = condition
+    def setAttribute(self, attribute):
+        self.attribute = attribute
 
 
 
