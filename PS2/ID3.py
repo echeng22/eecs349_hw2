@@ -1,6 +1,7 @@
 from node import Node
 from collections import Counter
 import numpy as np
+import copy
 
 
 # Examples: a list of dictionary. Each dictionary contains information about attributes and the result of classification
@@ -29,14 +30,17 @@ def ID3_helper(examples, attributes, default):
     if len(examples) == 0:
         leaf = Node()
         leaf.setLabel(default)
+        leaf.default = default
         return leaf
     elif classDis[0][1] == len(examples):
         leaf = Node()
         leaf.setLabel(classDis[0][0])
+        leaf.default = default
         return leaf
     elif len(attributes) == 0:
         leaf = Node()
         leaf.setLabel(classDis[0][0])
+        leaf.default = default
         return leaf
     else:
         bestAt = bestAttribute(examples, attributes)
@@ -45,6 +49,7 @@ def ID3_helper(examples, attributes, default):
         newNode.setAttribute(bestAt)
         # print examples
         newNode.setTestSamples(examples)
+        newNode.default = default
         atValues = getUniqueAttrValues(examples, bestAt)
         sortedSamples = sortExamplesByAttribute(examples, bestAt, atValues)
         for i in range(len(atValues)):
@@ -59,7 +64,6 @@ def ID3_helper(examples, attributes, default):
             newNode.addChildren(atValues[i], subtree)
         return newNode
 
-
 def prune(node, examples):
     '''
     Takes in a trained tree and a validation set of examples.  Prunes nodes in order
@@ -67,35 +71,61 @@ def prune(node, examples):
     '''
     # node: tree; example: val_data
     acc = []
-    tree_new = []
+    node_cut = []
     ori_tree = node
-    ori_acc = test(node, examples)
-    nodeList = search_node(node)
-    for n in nodeList:
-        tree = ori_tree
-        # print "original tree"
-        # print breadth_first_search(tree)
-        value = getClassDistribution(n.testSamples)[0][0]
-        # print "node"
-        # print n
-        # print "value"
-        # print value
-        tree = replaceNewTree(tree, n, value)
-        tree_new.append(tree)
-        # print "new tree"
-        # print breadth_first_search(tree)
-        acc_new = test(tree, examples)
+    ori_acc = test(ori_tree, examples)
+    nodeList = search_node(ori_tree)
+    for n in range(len(nodeList)):
+        value = getClassDistribution(nodeList[n].testSamples)[0][0]
+        (treeInfo, removed, removed_key) = replaceNewTree(ori_tree, nodeList[n], value)
+        node_cut.append(n)
+        acc_new = test(treeInfo, examples)
         acc.append(acc_new)
-    max_acc = max(acc)
-    # print "Acc list"
-    # print acc
-    index = acc.index(max_acc)
-    if max_acc <= ori_acc:
-        tree = ori_tree
-    else:
-        tree = tree_new[index]
+        addBackNode(removed, removed_key)
+    if len(acc) != 0:
+        max_acc = max(acc)
+        index = acc.index(max_acc)
 
-    return tree
+    else:
+        max_acc = 0
+    if max_acc < ori_acc:
+        final = ori_tree
+    else:
+        final = replaceNewTree(node, nodeList[index], getClassDistribution(nodeList[index].testSamples)[0][0])
+    return final
+
+
+# def prune(node, examples):
+#     '''
+#     Takes in a trained tree and a validation set of examples.  Prunes nodes in order
+#     to improve accuracy on the validation data; the precise pruning strategy is up to you.
+#     '''
+#     # node: tree; example: val_data
+#     acc = []
+#     node_cut = []
+#     ori_tree = node
+#     ori_acc = test(ori_tree, examples)
+#     nodeList = search_node(ori_tree)
+#     for n in range(len(nodeList)):
+#         copy = ID3(node.testSamples, node.default)
+#         copyList = search_node(copy)
+#         value = getClassDistribution(copyList[n].testSamples)[0][0]
+#         treeInfo = replaceNewTree(copy, copyList[n], value)
+#         node_cut.append(n)
+#         acc_new = test(treeInfo, examples)
+#         acc.append(acc_new)
+#     if len(acc) != 0:
+#         max_acc = max(acc)
+#         index = acc.index(max_acc)
+#
+#     else:
+#         max_acc = 0
+#     if max_acc < ori_acc:
+#         final = ori_tree
+#     else:
+#         final = replaceNewTree(node, nodeList[index], getClassDistribution(nodeList[index].testSamples)[0][0])
+#     return final
+
 
 
 def search_node(root):
@@ -114,22 +144,67 @@ def search_node(root):
     return s
 
 
+# def replaceNewTree(tree, node, value):
+#     parent = node.parent
+#     # print "parent"
+#     # print parent
+#     temp = None
+#     temp_key = None
+#     new_node = creatNewNode(value, node)
+#     if parent == None:
+#         node.setLabel(getClassDistribution(node.testSamples)[0][0])
+#         node.setChildren({})
+#         node.setAttribute(None)
+#         return node
+#     else:
+#         for k, v in parent.children.iteritems():
+#             if v.attribute == node.attribute:
+#                 temp = parent.children[k]
+#                 temp_key = k
+#                 parent.children[k] = new_node
+#         return tree
+#         # print "new_node"
+#         # print new_node
+#         # print "replace new tree"
+#         # print breadth_first_search(tree)
+
 def replaceNewTree(tree, node, value):
     parent = node.parent
     # print "parent"
     # print parent
+    temp = None
+    temp_key = None
     new_node = creatNewNode(value, node)
     if parent == None:
-        return tree
+        node.setLabel(getClassDistribution(node.testSamples)[0][0])
+        temp_child = node.getChildren()
+        temp_at = node.getAttribute()
+        node.setChildren({})
+        node.setAttribute(None)
+        return (node, (node, temp_child), temp_at)
     else:
         for k, v in parent.children.iteritems():
-            if v == node:
+            if v.attribute == node.attribute:
+                temp = parent.children[k]
+                temp_key = k
                 parent.children[k] = new_node
+        return (tree, temp, temp_key)
         # print "new_node"
         # print new_node
         # print "replace new tree"
         # print breadth_first_search(tree)
-        return tree
+
+
+
+
+def addBackNode(removed, removed_key):
+    if type(removed) != type(Node()):
+        orig_node = removed[0]
+        orig_node.setChildren(removed[1])
+        orig_node.setAttribute(removed_key)
+    else:
+        parent = removed.parent
+        parent.children[removed_key] = removed
 
 
 def creatNewNode(value, node):

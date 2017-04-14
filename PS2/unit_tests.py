@@ -1,4 +1,5 @@
-import ID3, parse, random, matplotlib
+import ID3, parse, random
+import matplotlib.pyplot as plt
 
 def breadth_first_search(root):
     '''
@@ -30,10 +31,14 @@ def testID3AndEvaluate():
     print "ID3 test failed -- no tree returned"
 
 def testPruning():
-  data = [dict(a=1, b=0, Class=1), dict(a=1, b=1, Class=1), dict(a=0, b=1, Class=0), dict(a=0, b=0, Class=1)]
-  validationData = [dict(a=1, b=0, Class=1), dict(a=1, b=1, Class=1), dict(a=0, b=0, Class=0), dict(a=0, b=0, Class=0)]
+  # data = [dict(a=1, b=0, Class=1), dict(a=1, b=1, Class=1), dict(a=0, b=1, Class=0), dict(a=0, b=0, Class=1)]
+  # validationData = [dict(a=1, b=0, Class=1), dict(a=1, b=1, Class=1), dict(a=0, b=0, Class=0), dict(a=0, b=0, Class=0)]
+  data = [dict(a=1, b=0, Class=0), dict(a=1, b=1, Class=0), dict(a=0, b=1, Class=1)]
+  validationData = [dict(a=1, b=0, Class=0), dict(a=1, b=1, Class=0), dict(a=0, b=0, Class=0), dict(a=0, b=0, Class=0)]
   tree = ID3.ID3(data, 0)
   ID3.prune(tree, validationData)
+  print "pruned tree"
+  print breadth_first_search(tree)
   if tree != None:
     ans = ID3.evaluate(tree, dict(a=0, b=0))
     if ans != 0:
@@ -105,13 +110,16 @@ def testPruningOnHouseData(inFile):
   print withPruning
   print withoutPruning
   print "average with pruning",sum(withPruning)/len(withPruning)," without: ",sum(withoutPruning)/len(withoutPruning)
-  return (withoutPruning, withPruning)
 
 def main():
   testID3AndEvaluate()
   testID3AndTest()
   testPruning()
   (prune, noPrune) = testPruningOnHouseData('/home/freelancer/Documents/EECS349/HW2/PS2/house_votes_84.data')
+  plt.plot(prune)
+  plt.show()
+  plt.plot(noPrune)
+  plt.show()
 
 if __name__=="__main__":
     main()
