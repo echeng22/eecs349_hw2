@@ -23,17 +23,14 @@ def ID3_helper(examples, attributes, default):
     if len(examples) == 0:
         leaf = Node()
         leaf.setLabel(default)
-        leaf.default = default
         return leaf
     elif classDis[0][1] == len(examples):
         leaf = Node()
         leaf.setLabel(classDis[0][0])
-        leaf.default = default
         return leaf
     elif len(attributes) == 0:
         leaf = Node()
         leaf.setLabel(classDis[0][0])
-        leaf.default = default
         return leaf
     else:
         bestAt = bestAttribute(examples, attributes)
@@ -41,7 +38,6 @@ def ID3_helper(examples, attributes, default):
         newNode = Node()
         newNode.setAttribute(bestAt)
         newNode.setTestSamples(examples)
-        newNode.default = default
         atValues = getUniqueAttrValues(examples, bestAt)
         sortedSamples = sortExamplesByAttribute(examples, bestAt, atValues)
         for i in range(len(atValues)):

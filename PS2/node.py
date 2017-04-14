@@ -9,7 +9,6 @@ class Node:
         self.parent = None # Holds the parent of this Node. Parent is a single Node object. If None, this node is the root of the tree
         # Holds the test samples used to evaluate the split for this node. Will be used to help determine the majority when pruning the tree
         self.testSamples = []
-        self.default = None
 
     def getLabel(self):
         return self.label
