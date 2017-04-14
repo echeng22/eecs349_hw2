@@ -31,17 +31,17 @@ class Node:
     def setAttribute(self, attribute):
         self.attribute = attribute
 
-    def getParent(self, parent):
-        self.parent = parent
-
-    def setParent(self, parent):
+    def getParent(self):
         return self.parent
 
-    def getTestSamples(self, samples):
-        self.testSamples = samples
+    def setParent(self, parent):
+        self.parent = parent
 
-    def setTestSamples(self):
+    def getTestSamples(self):
         return self.testSamples
+
+    def setTestSamples(self, samples):
+        self.testSamples = samples
 
 
 

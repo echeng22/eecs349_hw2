@@ -19,13 +19,13 @@ def ID3(examples, default):
 
 # Helper function that will help keep track of attributes that are already split on
 def ID3_helper(examples, attributes, default):
-    print "Examples"
-    print examples
+    # print "Examples"
+    # print examples
     classDis = getClassDistribution(examples)
-    print "Length"
-    print len(examples)
-    print "first size"
-    print classDis[0][1]
+    # print "Length"
+    # print len(examples)
+    # print "first size"
+    # print classDis[0][1]
     if len(examples) == 0:
         leaf = Node()
         leaf.setLabel(default)
@@ -43,21 +43,21 @@ def ID3_helper(examples, attributes, default):
         attributes.remove(bestAt)
         newNode = Node()
         newNode.setAttribute(bestAt)
+        # print examples
         newNode.setTestSamples(examples)
         atValues = getUniqueAttrValues(examples, bestAt)
         sortedSamples = sortExamplesByAttribute(examples, bestAt, atValues)
         for i in range(len(atValues)):
-            print "Values"
-            print atValues
-            print "i"
-            print i
-            print "Sorted Examples"
-            print sortedSamples[i]
+            # print "Values"
+            # print atValues
+            # print "i"
+            # print i
+            # print "Sorted Examples"
+            # print sortedSamples[i]
             subtree = ID3_helper(sortedSamples[i], attributes, getClassDistribution(sortedSamples[i]))
             subtree.setParent(newNode)
             newNode.addChildren(atValues[i], subtree)
         return newNode
-
 
 
 def prune(node, examples):
@@ -65,27 +65,131 @@ def prune(node, examples):
     Takes in a trained tree and a validation set of examples.  Prunes nodes in order
     to improve accuracy on the validation data; the precise pruning strategy is up to you.
     '''
+    # node: tree; example: val_data
+    acc = []
+    tree_new = []
+    ori_tree = node
+    ori_acc = test(node, examples)
+    nodeList = search_node(node)
+    for n in nodeList:
+        tree = ori_tree
+        # print "original tree"
+        # print breadth_first_search(tree)
+        value = getClassDistribution(n.testSamples)[0][0]
+        # print "node"
+        # print n
+        # print "value"
+        # print value
+        tree = replaceNewTree(tree, n, value)
+        tree_new.append(tree)
+        # print "new tree"
+        # print breadth_first_search(tree)
+        acc_new = test(tree, examples)
+        acc.append(acc_new)
+    max_acc = max(acc)
+    # print "Acc list"
+    # print acc
+    index = acc.index(max_acc)
+    if max_acc <= ori_acc:
+        tree = ori_tree
+    else:
+        tree = tree_new[index]
 
+    return tree
+
+
+def search_node(root):
+    s = []
+    q = []
+    i = 0
+    q.append(root)
+    while i < len(q):
+        current = q[i]
+        if len(current.children) != 0:
+            s.append(current)
+            child = current.children.values()
+            for j in range(len(child)):
+                q.append(child[j])
+        i = i + 1
+    return s
+
+
+def replaceNewTree(tree, node, value):
+    parent = node.parent
+    # print "parent"
+    # print parent
+    new_node = creatNewNode(value, node)
+    if parent == None:
+        return tree
+    else:
+        for k, v in parent.children.iteritems():
+            if v == node:
+                parent.children[k] = new_node
+        # print "new_node"
+        # print new_node
+        # print "replace new tree"
+        # print breadth_first_search(tree)
+        return tree
+
+
+def creatNewNode(value, node):
+    new_node = Node()
+    new_node.setAttribute(None)
+    new_node.setChildren({})
+    new_node.setLabel(value)
+    new_node.setParent(node.parent)
+    new_node.setTestSamples(node.testSamples)
+    return new_node
 
 def test(node, examples):
     '''
     Takes in a trained tree and a test set of examples.  Returns the accuracy (fraction
     of examples the tree classifies correctly).
     '''
+    # print "Test Tree"
+    # breadth_first_search(node)
     correct = 0
     for example in examples:
         classVal = evaluate(node, example)
         if classVal == example['Class']:
             correct = correct + 1
-    return float(correct)/len(examples)
+    acc = float(correct) / len(examples)
+    # print "accuracy"
+    # print acc
+    return acc
 
 
 def evaluate(node, example):
-    '''
-    Takes in a tree and one example.  Returns the Class value that the tree
-    assigns to the example.
-    '''
+  temp = node
+  while len(temp.children) != 0:
+    na = temp.attribute # na1: first node attribute
+    # print na
+  # example = dict(a=1, b=0);
+    val = example[na]
+    # print val
 
+    if val == '?':
+        atList = getAttributeDistribution(temp.getTestSamples(), na)
+        if atList[0][0] == '?':
+            val = atList[1][0]
+        else:
+            val = atList[0][0]
+    # print "val"
+    # print val
+    # print "children"
+    # print temp.children
+
+    if len(temp.children) == 1:
+        onlyVal = temp.children.values()
+        new_node = onlyVal[0]
+    else:
+        new_node = temp.children[val]
+    temp = new_node
+  # print "temp"
+  # print temp
+  # print "label"
+  # print temp.label
+  return temp.label
 
 # Returns two arrays of the example set.
 # Attribute will be a dictionary that describes the condition needed
@@ -144,8 +248,7 @@ def calcInfoGain(examples, attribute):
     # Get unique attribute values
     values = getUniqueAttrValues(examples, attribute)
     if '?' in values:
-        values.remove(values.index('?'))
-    values = np.array(values)
+        values.remove('?')
     unique_value = np.unique(values)
 
     # Sort examples based on attribute values
@@ -199,12 +302,44 @@ def getClassDistribution(examples):
     for example in examples:
         classList.append(example['Class'])
     data = Counter(classList)
-    print "class distro"
-    print data.most_common()
+    # print "class distro"
+    # print data.most_common()
+    return data.most_common()
+
+# Return list of class distributions. First one in list is the mode
+def getAttributeDistribution(examples, attribute):
+    atList = []
+    # for i in range(len(examples)):
+    #     classList[i] = examples[i].get('Class')
+    for example in examples:
+        atList.append(example[attribute])
+    data = Counter(atList)
+    # print "class distro"
+    # print data.most_common()
     return data.most_common()
 
 def getUniqueAttrValues(examples, attribute):
     values = []
     for example in examples:
         values.append(example[attribute])
-    return np.unique(values)
+    values = np.unique(values).tolist()
+    if '?' in values:
+        values.remove('?')
+    return values
+
+
+def breadth_first_search(root):
+    '''
+    given the root node, will complete a breadth-first-search on the tree, returning the value of each node in the correct order
+    '''
+    tree = [root]
+    bfsStr = ""
+    while len(tree) != 0:
+        childList = tree[0].children
+        bfsStr += "Label: " + str(tree[0].label) + " " + "Attribute: " + str(tree[0].attribute) + " Key: " + str(tree[0].children.keys()) + " Value: " +  str(tree[0].children.values())  + \
+                  " Address: " + str(tree[0]) + "\n"
+        if childList != None or len(childList) != 0:
+            for k, v in childList.iteritems():
+                tree.append(v)
+        tree.pop(0)
+    return bfsStr

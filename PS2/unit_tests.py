@@ -1,4 +1,4 @@
-import ID3, parse, random
+import ID3, parse, random, matplotlib
 
 def breadth_first_search(root):
     '''
@@ -105,9 +105,13 @@ def testPruningOnHouseData(inFile):
   print withPruning
   print withoutPruning
   print "average with pruning",sum(withPruning)/len(withPruning)," without: ",sum(withoutPruning)/len(withoutPruning)
+  return (withoutPruning, withPruning)
 
 def main():
+  testID3AndEvaluate()
   testID3AndTest()
+  testPruning()
+  (prune, noPrune) = testPruningOnHouseData('/home/freelancer/Documents/EECS349/HW2/PS2/house_votes_84.data')
 
 if __name__=="__main__":
     main()
